@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- The site's idea, reduced to a favicon: two deterministic stages
+       short-circuiting before one expensive model call. Teal = cheap,
+       indigo = model. Same semantics as --det / --llm. -->
+  <rect width="32" height="32" fill="#0e1116"/>
+  <rect x="6" y="9"  width="9"  height="3" rx="1.5" fill="#2ed3a7"/>
+  <rect x="6" y="15" width="6"  height="3" rx="1.5" fill="#2ed3a7"/>
+  <rect x="6" y="21" width="20" height="3" rx="1.5" fill="#8b87ff"/>
+</svg>

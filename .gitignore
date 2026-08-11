@@ -1,0 +1,20 @@
+node_modules
+.next
+out
+.env*
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+
+# Screenshots captured during development, including pages from third-party
+# sites. Working artefacts, not source.
+.playwright-mcp/
+
+# Original source archive — superseded by the tracked source itself.
+files (2)/
+
+# Resume PDFs kept at the repo root are NOT referenced by the site and carry
+# personal contact details. This repository is public. The one resume the site
+# actually links lives in public/ and is published deliberately.
+/Likhith_kumar Resume.pdf
+/LikhithKumar_VIT (1).pdf

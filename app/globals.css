@@ -1,0 +1,294 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Design tokens.
+
+   Three type roles, each with a job:
+     --font-display  Instrument Serif  headlines. The editorial register.
+     --font-sans     IBM Plex Sans     body prose.
+     --font-mono     IBM Plex Mono     labels, data, stage names. The machine voice.
+
+   Two accent colours carry meaning rather than mood:
+     --det  teal    deterministic / cheap path (lookups, cache hits, validation)
+     --llm  indigo  model call / expensive path
+   Keep that mapping intact — it is the idea the whole site is built on.
+
+   Dark is the base palette: it sits on bare :root, so it is what a visitor gets
+   when no preference can be read. Light is applied only when the OS asks for it
+   or the toggle does. Every token is defined in both themes — none may have its
+   only definition inside a media query, or the toggle would have nothing to
+   override.
+
+   The accents are NOT shared between themes. #0b7a5f on #0e1116 is ~2.5:1,
+   far below the 4.5:1 floor, so each theme carries its own pair. Measured
+   ratios are noted per token; re-check them if you change a value.
+--------------------------------------------------------------------------- */
+
+:root {
+  --paper: #0e1116;
+  --paper-2: #161a20; /* raised surface: hovered rows, chips */
+  --ink: #f3f5f7; /* 17.30:1 */
+  --ink-2: #b3bac2; /*  9.65:1 */
+  --ink-3: #7d858f; /*  5.06:1 */
+  --rule: #252a31;
+  --det: #2ed3a7; /*  9.90:1 */
+  --llm: #8b87ff; /*  6.31:1 */
+
+  /* Full-bleed band. In dark this lifts and warms slightly — enough to read as a
+     separate surface without the glare of a true inversion. The hairline edges
+     on .band are what actually define it at this little contrast. */
+  --band: #191d23;
+  --band-ink: #f3f5f7;
+  --band-ink-2: #b3bac2;
+  --band-rule: #303740;
+
+  /* A band is dark in BOTH themes, so its foregrounds do not vary by theme and
+     are declared once here. This is not an oversight — omitting them is what
+     caused light-theme accents (#2f2bd6 indigo) to land on a near-black band at
+     ~1.5:1. Measured on both band backgrounds: teal 8.9–10.0:1, indigo
+     5.7–6.4:1, muted 5.4–6.0:1. */
+  --band-ink-3: #94908a;
+  --band-det: #2ed3a7;
+  --band-llm: #8b87ff;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --paper: #fffefb; /* warmed off-white; pure #fff reads clinical */
+    --paper-2: #f7f5f0;
+    --ink: #14110d; /* 18.4:1 */
+    --ink-2: #55504a; /*  6.9:1 */
+    --ink-3: #6b6660; /*  5.1:1 */
+    --rule: #e5e1d8;
+    --det: #0b7a5f; /*  5.4:1 */
+    --llm: #2f2bd6; /*  8.7:1 */
+
+    /* In light the band inverts outright. That contrast is the drama. */
+    --band: #14110d;
+    --band-ink: #faf8f4;
+    --band-ink-2: #b8b2a8;
+    --band-rule: #2e2a24;
+  }
+}
+
+:root[data-theme="light"] {
+  --paper: #fffefb;
+  --paper-2: #f7f5f0;
+  --ink: #14110d;
+  --ink-2: #55504a;
+  --ink-3: #6b6660;
+  --rule: #e5e1d8;
+  --det: #0b7a5f;
+  --llm: #2f2bd6;
+  --band: #14110d;
+  --band-ink: #faf8f4;
+  --band-ink-2: #b8b2a8;
+  --band-rule: #2e2a24;
+}
+
+:root[data-theme="dark"] {
+  --paper: #0e1116;
+  --paper-2: #161a20;
+  --ink: #f3f5f7;
+  --ink-2: #b3bac2;
+  --ink-3: #7d858f;
+  --rule: #252a31;
+  --det: #2ed3a7;
+  --llm: #8b87ff;
+  --band: #191d23;
+  --band-ink: #f3f5f7;
+  --band-ink-2: #b3bac2;
+  --band-rule: #303740;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--paper); /* prevents a flash of the wrong ground on load */
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+  }
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--llm);
+  color: var(--paper);
+}
+
+:focus-visible {
+  outline: 2px solid var(--llm);
+  outline-offset: 3px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* --- layout --------------------------------------------------------------- */
+
+/* Content column. Sections own their own shell so a band can bleed to the
+   viewport edge while its text stays on the grid. */
+.shell {
+  margin-inline: auto;
+  max-width: 68rem;
+  padding-inline: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .shell {
+    padding-inline: 2.5rem;
+  }
+}
+
+/* Full-bleed band. Repaints the local palette so anything inside — including
+   components that only ever reference --ink / --rule — inherits the inverted
+   surface without needing to know it is in a band. */
+.band {
+  background: var(--band);
+  color: var(--band-ink);
+  /* Defines the band edge in dark mode, where background contrast alone is only
+     a few points. Invisible-by-design in light, where the inversion is stark. */
+  border-block: 1px solid var(--band-rule);
+  --ink: var(--band-ink);
+  --ink-2: var(--band-ink-2);
+  --ink-3: var(--band-ink-3);
+  --rule: var(--band-rule);
+  --paper: var(--band);
+  --paper-2: color-mix(in srgb, var(--band) 88%, var(--band-ink));
+  /* Accents must be remapped too. A component inside a band only ever asks for
+     --det / --llm; it has no idea it is on an inverted surface. */
+  --det: var(--band-det);
+  --llm: var(--band-llm);
+}
+
+/* --- type roles ----------------------------------------------------------- */
+
+/* Eyebrow / label / data — mono, tracked out, small. */
+.label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* Display: Instrument Serif. High contrast, narrow, built for size — it wants
+   tight tracking and a line-height under 1. */
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+}
+
+/* Display sizes.
+
+   The lower bound is load-bearing: Instrument Serif advances at roughly 0.45em,
+   so "Forward-deployed" is ~16 × 0.45 × font-size wide. At a 375px viewport with
+   24px gutters there are 327px available, which caps the minimum near 45px.
+   Verified in the browser, not just computed — check it again if the string or
+   the face changes. */
+.display-hero {
+  font-size: clamp(2.6rem, 9vw, 7.5rem);
+}
+
+.display-page {
+  font-size: clamp(2.4rem, 7.5vw, 5.5rem);
+}
+
+.display-md {
+  font-size: clamp(1.9rem, 4vw, 3rem);
+}
+
+.lede {
+  font-size: clamp(1.25rem, 2.4vw, 1.75rem);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.prose-block p {
+  max-width: 68ch;
+  color: var(--ink-2);
+  margin-bottom: 1.1rem;
+}
+
+.prose-block p:last-child {
+  margin-bottom: 0;
+}
+
+/* Pull quote — serif at mid scale, used to break long prose runs. */
+.pull {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.rule-t {
+  border-top: 1px solid var(--rule);
+}
+
+/* --- motion --------------------------------------------------------------- */
+
+.bar-fill {
+  transform-origin: left center;
+}
+
+/* Scroll reveal.
+
+   Scoped to .js — that class is set by an inline script in the document head
+   before first paint. Without it the hidden state never applies, so if the
+   script fails, hydration breaks, or a crawler ignores JS, the content is
+   simply visible. The animation is an enhancement, never a gate on reading. */
+.js .reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.js .reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.001ms !important;
+  }
+  .js .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .bar-fill {
+    transform: scaleX(1);
+  }
+}
