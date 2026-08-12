@@ -2,28 +2,28 @@ import { describe, expect, it } from "vitest";
 import { resolveQuery, type CatalogueItem } from "./retrieval";
 
 const CATALOGUE: CatalogueItem[] = [
-  { sku: "KLM-4471", name: "Kanjivaram silk saree", attrs: ["silk", "maroon", "bridal", "saree"] },
-  { sku: "KLM-2210", name: "Cotton handloom saree", attrs: ["cotton", "blue", "daily", "saree"] },
-  { sku: "KLM-9902", name: "Banarasi georgette saree", attrs: ["georgette", "gold", "festive", "saree"] },
-  { sku: "KLM-3115", name: "Mens silk kurta", attrs: ["silk", "cream", "kurta", "festive"] },
+  { sku: "CAT-4471", name: "Kanjivaram silk saree", attrs: ["silk", "maroon", "bridal", "saree"] },
+  { sku: "CAT-2210", name: "Cotton handloom saree", attrs: ["cotton", "blue", "daily", "saree"] },
+  { sku: "CAT-9902", name: "Banarasi georgette saree", attrs: ["georgette", "gold", "festive", "saree"] },
+  { sku: "CAT-3115", name: "Mens silk kurta", attrs: ["silk", "cream", "kurta", "festive"] },
 ];
 
 describe("resolveQuery — routing", () => {
   it("short-circuits on an exact SKU without touching the model path", () => {
-    const r = resolveQuery(CATALOGUE, "KLM-4471");
+    const r = resolveQuery(CATALOGUE, "CAT-4471");
     expect(r.path).toBe("exact");
-    expect(r.matches[0].sku).toBe("KLM-4471");
+    expect(r.matches[0].sku).toBe("CAT-4471");
     expect(r.usedModel).toBe(false);
   });
 
   it("matches a SKU regardless of case or surrounding whitespace", () => {
-    expect(resolveQuery(CATALOGUE, "  klm-4471 ").path).toBe("exact");
+    expect(resolveQuery(CATALOGUE, "  cat-4471 ").path).toBe("exact");
   });
 
   it("finds a SKU embedded in a sentence, the way a customer actually writes", () => {
-    const r = resolveQuery(CATALOGUE, "do you have KLM-2210 in stock?");
+    const r = resolveQuery(CATALOGUE, "do you have CAT-2210 in stock?");
     expect(r.path).toBe("exact");
-    expect(r.matches[0].sku).toBe("KLM-2210");
+    expect(r.matches[0].sku).toBe("CAT-2210");
   });
 
   it("treats a full product name as the cheap path too", () => {
@@ -42,7 +42,7 @@ describe("resolveQuery — routing", () => {
   it("ranks the closest item first on the fallback path", () => {
     const r = resolveQuery(CATALOGUE, "cotton blue daily wear");
     expect(r.path).toBe("vector");
-    expect(r.matches[0].sku).toBe("KLM-2210");
+    expect(r.matches[0].sku).toBe("CAT-2210");
   });
 
   it("returns no matches, and no model call, for an empty query", () => {
@@ -61,7 +61,7 @@ describe("resolveQuery — routing", () => {
 
 describe("resolveQuery — stages", () => {
   it("stops the stage list at the lookup when the cheap path wins", () => {
-    const stages = resolveQuery(CATALOGUE, "KLM-4471").stages;
+    const stages = resolveQuery(CATALOGUE, "CAT-4471").stages;
     expect(stages.map((s) => s.stage)).toEqual(["lang.detect", "catalog.lookup"]);
     expect(stages.every((s) => s.path === "det")).toBe(true);
   });
@@ -80,7 +80,7 @@ describe("resolveQuery — stages", () => {
   });
 
   it("costs strictly less on the cheap path", () => {
-    const cheap = resolveQuery(CATALOGUE, "KLM-4471");
+    const cheap = resolveQuery(CATALOGUE, "CAT-4471");
     const dear = resolveQuery(CATALOGUE, "something for a festive evening");
     expect(cheap.totalMs).toBeLessThan(dear.totalMs);
   });

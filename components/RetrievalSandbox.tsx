@@ -44,7 +44,7 @@ export default function RetrievalSandbox() {
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="KLM-2210, or: something gold for a wedding"
+        placeholder="CAT-2210, or: something gold for a wedding"
         autoComplete="off"
         spellCheck={false}
         className="mt-6 w-full border border-rule bg-paper-2 px-4 py-3 font-mono text-[14px] text-ink placeholder:text-ink-3 focus:border-ink-3 focus:outline-none"

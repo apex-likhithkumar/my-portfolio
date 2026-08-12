@@ -5,7 +5,7 @@ import { heroTrace, traceNote } from "@/content/projects";
 import { stagesForMode, traceProgress, traceTotals, type TraceMode } from "@/lib/trace";
 
 /**
- * Signature element: one real request traced through the Kalamandir pipeline,
+ * Signature element: one real request traced through the commerce pipeline,
  * replayed on a loop.
  *
  * Colour encodes which path a stage took — teal for deterministic work, indigo

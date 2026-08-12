@@ -43,7 +43,7 @@ Measured against the running dev server at 1440×900 on 2026-08-11.
 | --- | --- |
 | `favicon.ico` 404s | browser console on every page load |
 | No dark mode | `app/globals.css` defines a single `:root` palette |
-| Body content hidden without JS | `.reveal { opacity: 0 }` in CSS; full-page screenshots of `/` and `/projects/kalamandir` show empty regions where Work and all case-study sections should be |
+| Body content hidden without JS | `.reveal { opacity: 0 }` in CSS; full-page screenshots of `/` and each case-study route show empty regions where Work and all case-study sections should be |
 | Hero type is clamped below its fluid size | `clamp(2.1rem, 7.2vw, 4.6rem)` — at 1440px the fluid term wants ~103px, cap holds it to 73.6px |
 | Case studies are undifferentiated prose | `app/projects/[slug]/page.tsx` renders five text sections, no diagram |
 | Fonts are render-blocking third-party | `app/layout.tsx` uses a Google Fonts `<link>` rather than `next/font` |
@@ -108,7 +108,8 @@ portfolio piece, and all three case studies currently read as interchangeable pr
 - Hand-built inline SVG, one per project, using the same teal/indigo semantics as the
   hero so the site reads as one system.
 - Drawn from Likhith's own written descriptions in `content/projects.ts` — **no client
-  UI, no client data, no Kalamandir screenshots**, so there is no NDA exposure.
+  UI, no client data, no client screenshots, and no client named**, so there is
+  no NDA exposure.
 - Must be legible in both themes (stroke and fill via CSS custom properties, never
   hardcoded hex).
 - Needs a real text alternative; a diagram that is meaningless to a screen reader is

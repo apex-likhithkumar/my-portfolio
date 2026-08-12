@@ -50,7 +50,7 @@ export const site = {
   ],
 };
 
-// Hero signature: one real request through the Kalamandir pipeline.
+// Hero signature: one real request through the commerce platform's pipeline.
 // path: "det" = deterministic / cheap · "llm" = model call / expensive
 export type TraceStage = {
   stage: string;
@@ -126,7 +126,8 @@ export type Metric = {
 // with invented, prettier names is not evidence of anything.
 //
 // These describe systems in the author's own words. No client UI, screenshots
-// or data appear here, which is what keeps the Kalamandir figure publishable.
+// or data appear here, and the client is never named — that is what keeps the
+// commerce-platform figure publishable.
 // ---------------------------------------------------------------------------
 
 export type DiagramStep = {
@@ -183,10 +184,17 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    slug: "kalamandir",
+    // Client is deliberately unnamed. This is live client work with two code
+    // extracts published from it, so the case study describes the system without
+    // identifying whose it is. Keep it that way: no client name in the slug, the
+    // title, the copy, or the sample SKU prefixes in content/catalogue.ts.
+    slug: "conversational-commerce",
     index: "01",
-    title: "Kalamandir",
-    subtitle: "Multi-tenant omnichannel AI support and conversational commerce",
+    title: "Multi-Tenant Commerce Platform",
+    // Subtitle carries a concrete fact rather than restating the title's
+    // category — "multi-tenant omnichannel conversational commerce" twice in a
+    // row said nothing the second time.
+    subtitle: "Four retail brands, four channels, one deployment",
     domain: "Retail · conversational commerce",
     period: "Mar 2026 — present",
     role: "Forward-Deployed AI Engineer",
