@@ -6,6 +6,7 @@ import ArchDiagram from "@/components/ArchDiagram";
 import Metrics from "@/components/Metrics";
 import CodeSnippet from "@/components/CodeSnippet";
 import { projects, site } from "@/content/projects";
+import { siteUrl } from "@/lib/site-url";
 
 export function generateStaticParams() {
   return projects.map((p) => ({ slug: p.slug }));
@@ -19,9 +20,26 @@ export async function generateMetadata({
   const { slug } = await params;
   const p = projects.find((x) => x.slug === slug);
   if (!p) return {};
+
+  const title = `${p.title} — ${site.name}`;
+
+  // openGraph has to be set explicitly. Returning only `description` overrides
+  // the plain meta tag but leaves og:description inheriting the root layout's
+  // generic bio, so every shared case-study link previewed identically.
   return {
-    title: `${p.title} — ${site.name}`,
+    title,
     description: p.summary,
+    openGraph: {
+      title,
+      description: p.summary,
+      url: `${siteUrl}/projects/${p.slug}`,
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: p.summary,
+    },
   };
 }
 

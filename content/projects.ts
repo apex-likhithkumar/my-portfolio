@@ -3,16 +3,32 @@
 // need to touch the components in /components or the pages in /app.
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// GitHub identity — single source of truth.
+//
+// Every github.com link on the site is derived from these two constants, so the
+// handles cannot drift apart again. They already did once: the site shipped a
+// link to "lkumar2925", which 404s because that account was renamed and GitHub
+// does not redirect renamed profile URLs.
+//
+// Two constants rather than one because they are genuinely two accounts today.
+// The profile is apex-likhithkumar (14 public repos, and the home of this
+// portfolio's own source). The two linked project repos still live under the
+// older work handle. Pointing them at PROFILE would 404, so the split stays
+// explicit until the repos are transferred — at which point delete REPO_OWNER
+// and every link follows PROFILE automatically.
+// ---------------------------------------------------------------------------
+const GITHUB_PROFILE = "apex-likhithkumar";
+const GITHUB_REPO_OWNER = "apexneural-likhithmasura";
+
+const repoUrl = (name: string) => `https://github.com/${GITHUB_REPO_OWNER}/${name}`;
+
 export const site = {
   name: "Likhith Kumar Masura",
   role: "Forward-Deployed AI Engineer",
   location: "Hyderabad, India",
   email: "likhithmasura@gmail.com",
-  // apex-likhithkumar, not apexneural-likhithmasura: 14 public repos versus 2,
-  // and it is where this portfolio's own source lives. Formerly "lkumar2925" —
-  // GitHub does not redirect renamed profile URLs, which is why the old link
-  // 404'd.
-  github: "https://github.com/apex-likhithkumar",
+  github: `https://github.com/${GITHUB_PROFILE}`,
   linkedin: "https://www.linkedin.com/in/likhith-masura-2a1645208",
   // Drop your resume PDF into /public and this link works.
   resume: "/Likhith_Kumar_Masura_Forward_Deployed_AI_Engineer.pdf",
@@ -25,9 +41,12 @@ export const site = {
   statement:
     "I build LLM systems that have to survive contact with real users — multi-tenant conversational commerce, market-intelligence pipelines, and agents that operate software the way a person does.",
 
+  // Keep this complementary to the pull quote on the About section, not a
+  // restatement of it. An earlier version repeated the quote almost verbatim two
+  // paragraphs later, which made the section read padded.
   intro: [
     "I work at ApexNeural as a forward-deployed engineer, which in practice means I sit close to the client, turn a vague problem into a spec, and stay on it until it is running in production.",
-    "Most of my time goes to the unglamorous half of applied AI: keeping model output grounded in real data, making retrieval cheap before it is clever, isolating tenants properly, and being able to answer what a request cost and where it spent its time.",
+    "The habit I have picked up from that is auditing my own claims before someone else does. Two of the case studies here name a gap I found re-reading my own code for this write-up rather than quietly fixing the wording.",
   ],
 };
 
@@ -445,7 +464,7 @@ export const projects: Project[] = [
       note: "Ranking sits before generation on purpose: 30 candidates collected, 10 survive to expansion, so two thirds are discarded before anything expensive runs. Those are the configured defaults rather than measured throughput. The validation steps are marked honestly — enforced at ingest, where a bad post re-raises, and currently swallowed at both model seams.",
     },
     metrics: [],
-    repo: "https://github.com/apexneural-likhithmasura/dbaas-backup",
+    repo: repoUrl("dbaas-backup"),
     decisions: [
       {
         title: "Schema at every boundary — enforced at ingest, still open at the model seams",
@@ -582,7 +601,7 @@ except Exception as e:
       note: "Every action funnels through one safety chokepoint rather than per-handler checks. Scattered safety rules are the ones that get forgotten in the next handler.",
     },
     metrics: [],
-    repo: "https://github.com/apexneural-likhithmasura/CUA-Computer-Using-agent",
+    repo: repoUrl("CUA-Computer-Using-agent"),
     snippets: [
       {
         label: "The safety chokepoint",

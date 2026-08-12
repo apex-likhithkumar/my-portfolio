@@ -28,9 +28,18 @@ const HOLD_MS = 2400;
 // as long as the cold path's 610ms one, which would flatly contradict the point.
 const SCALE_MAX = Math.max(...heroTrace.map((s) => s.ms));
 
+// Initial state is the FINISHED trace, not an empty one.
+//
+// Server-rendered HTML and the no-JS path both show whatever this is. Starting
+// at 0 meant a reader without JS saw every bar empty and a "0ms" total beside
+// stage latencies that clearly were not zero — the figure read as broken rather
+// than as static. Starting complete degrades to a correct still image, and the
+// animation resets it to 0 on its first frame when JS is alive.
+const COLD_TOTAL = traceTotals(stagesForMode(heroTrace, "cold")).totalMs;
+
 export default function TraceRail() {
   const [mode, setMode] = useState<TraceMode>("cold");
-  const [elapsed, setElapsed] = useState(0);
+  const [elapsed, setElapsed] = useState(COLD_TOTAL);
   const [hovered, setHovered] = useState<number | null>(null);
   const [reduced, setReduced] = useState(false);
 
