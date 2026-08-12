@@ -3,6 +3,7 @@ import TraceRail from "@/components/TraceRail";
 import Reveal from "@/components/Reveal";
 import ThemeToggle from "@/components/ThemeToggle";
 import Portrait from "@/components/Portrait";
+import RetrievalSandbox from "@/components/RetrievalSandbox";
 import { site, projects, stack, education } from "@/content/projects";
 
 /**
@@ -53,6 +54,12 @@ export default function Home() {
         <div className="shell">
           <TraceRail />
         </div>
+      </section>
+
+      {/* The trace asserts the short-circuit; this lets the reader test it with
+          their own input. Assertion followed immediately by proof. */}
+      <section className="shell mt-20 sm:mt-28">
+        <RetrievalSandbox />
       </section>
 
       {/* ---------------------------------------------------------------- work */}

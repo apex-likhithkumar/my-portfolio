@@ -8,7 +8,11 @@ export const site = {
   role: "Forward-Deployed AI Engineer",
   location: "Hyderabad, India",
   email: "likhithmasura@gmail.com",
-  github: "https://github.com/apexneural-likhithmasura",
+  // apex-likhithkumar, not apexneural-likhithmasura: 14 public repos versus 2,
+  // and it is where this portfolio's own source lives. Formerly "lkumar2925" —
+  // GitHub does not redirect renamed profile URLs, which is why the old link
+  // 404'd.
+  github: "https://github.com/apex-likhithkumar",
   linkedin: "https://www.linkedin.com/in/likhith-masura-2a1645208",
   // Drop your resume PDF into /public and this link works.
   resume: "/Likhith_Kumar_Masura_Forward_Deployed_AI_Engineer.pdf",
