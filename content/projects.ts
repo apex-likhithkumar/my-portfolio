@@ -71,6 +71,25 @@ export type Decision = { title: string; body: string };
  *   - If you cannot source it, leave it out. The component renders nothing for
  *     an empty list, which is the honest failure mode.
  */
+/**
+ * A short extract of real code.
+ *
+ * Same discipline as Metric: it has to be genuine. An invented snippet that a
+ * senior reads carefully is worse than no snippet, because it poisons every
+ * other claim on the page. Trim imports and logging, never rewrite logic, and
+ * if the extract has been abridged to the point where it would not run, say so
+ * in `caveat` rather than quietly patching it.
+ */
+export type Snippet = {
+  label: string;
+  language: string;
+  code: string;
+  /** Repo-relative path and line range. This is what makes it checkable. */
+  source: string;
+  note: string;
+  caveat?: string;
+};
+
 export type Metric = {
   /** The figure itself, pre-formatted: "92%", "1.2s", "4". */
   value: string;
@@ -127,6 +146,8 @@ export type Project = {
   diagram: Diagram;
   /** Empty until measured. See the Metric docblock before adding any. */
   metrics: Metric[];
+  /** Real extracts only. See the Snippet docblock. */
+  snippets: Snippet[];
   /** Public repository, when one exists. */
   repo?: string;
   /**
@@ -252,6 +273,60 @@ export const projects: Project[] = [
       },
     ],
     repoNote: "Client codebase — private.",
+    snippets: [
+      {
+        label: "Transaction-scoped tenant context",
+        language: "typescript",
+        code: `async withTenantContext<T>(
+  tenantId: string,
+  work: (manager: EntityManager) => Promise<T>,
+): Promise<T> {
+  return this.dataSource.transaction(async (manager) => {
+    await manager.query(\`SELECT set_config('app.tenant_id', $1, true)\`, [
+      tenantId,
+    ]);
+    return work(manager);
+  });
+}`,
+        source: "apps/api/src/modules/conversations/conversations.service.ts:82-92",
+        note:
+          "The third argument to set_config is the whole security property. `true` makes the GUC transaction-local, so it dies with the transaction instead of riding a pooled connection into the next tenant's request.",
+      },
+      {
+        label: "Pre-send hallucinated-SKU scrub",
+        language: "python",
+        code: `def _scrub_unknown_skus(
+    response: str, backend_data: dict[str, Any], tenant_id: str | None = None
+) -> str:
+    products = backend_data.get("products") if isinstance(backend_data, dict) else None
+    if not isinstance(products, list):
+        return response
+    real = {
+        str(p.get("sku") or p.get("id") or "").strip().upper()
+        for p in products
+        if isinstance(p, dict)
+    }
+    real.discard("")
+    # … tenant brand-pattern compilation elided; patterns = [SKU regex, brand regex]
+    mentioned = {m.group(0).upper() for rx in patterns for m in rx.finditer(response)}
+    bogus = mentioned - real
+    if not bogus:
+        return response
+
+    def _replace(match: re.Match) -> str:
+        return "" if match.group(0).upper() in bogus else match.group(0)
+
+    scrubbed = response
+    for rx in patterns:
+        scrubbed = rx.sub(_replace, scrubbed)
+    return scrubbed`,
+        source: "app/services/response_generator.py:1460-1515",
+        note:
+          "It takes the set difference between SKUs the model wrote and SKUs the catalogue actually returned, then deletes the difference from the prose. The model is never trusted as the source of truth about which products exist.",
+        caveat:
+          "Abridged: the docstring, a logger call, four separator-cleanup substitutions and the tenant brand-pattern branch are elided at the marked line.",
+      },
+    ],
     decisions: [
       {
         title: "Two-stage retrieval instead of vector-first",
@@ -338,6 +413,7 @@ export const projects: Project[] = [
           steps: [
             { label: "scrape.collect", path: "det", note: "30 results" },
             { label: "normalize", path: "det" },
+            { label: "schema.validate", path: "det", note: "enforced" },
           ],
         },
         {
@@ -345,7 +421,7 @@ export const projects: Project[] = [
           subtitle: "candidate pain points",
           steps: [
             { label: "painpoint.extract", path: "llm" },
-            { label: "schema.validate", path: "det", note: "Pydantic" },
+            { label: "schema.validate", path: "det", note: "gap — not enforced" },
           ],
         },
         {
@@ -362,19 +438,19 @@ export const projects: Project[] = [
           steps: [
             { label: "opportunity.expand", path: "llm" },
             { label: "framework.apply", path: "llm" },
-            { label: "schema.validate", path: "det", note: "Pydantic" },
+            { label: "schema.validate", path: "det", note: "gap — swallowed" },
           ],
         },
       ],
-      note: "Ranking sits before generation on purpose: 30 candidates collected, 10 survive to expansion, so two thirds are discarded before anything expensive runs. Those are the configured defaults rather than measured throughput. A Pydantic model guards every seam, so a malformed generation fails where it was produced rather than three stages downstream.",
+      note: "Ranking sits before generation on purpose: 30 candidates collected, 10 survive to expansion, so two thirds are discarded before anything expensive runs. Those are the configured defaults rather than measured throughput. The validation steps are marked honestly — enforced at ingest, where a bad post re-raises, and currently swallowed at both model seams.",
     },
     metrics: [],
     repo: "https://github.com/apexneural-likhithmasura/dbaas-backup",
     decisions: [
       {
-        title: "Every model output is schema-validated before it moves",
+        title: "Schema at every boundary — enforced at ingest, still open at the model seams",
         body:
-          "LLM stages chained together fail in a specific way: stage two receives something almost-shaped-right from stage one and quietly produces nonsense. Pydantic models on every boundary mean a malformed generation fails loudly at the seam where it was produced, not three stages downstream.",
+          "LLM stages chained together fail in a specific way: stage two receives something almost-shaped-right from stage one and quietly produces nonsense. The intent was a Pydantic model on every boundary. Auditing it for this write-up, that is true at ingest — a post that fails ExtractedDataModel re-raises and never reaches the LLM stages — but not at the model seams. The pain-point extractor returns json.loads output directly, and the market-gap stage wraps its one Pydantic boundary in a bare except that logs and passes the unvalidated JSON downstream. So the discipline is real at the edge where data enters and absent exactly where I claimed it mattered most. Closing that is a small change and a failing test, and it is the first thing I would do on this codebase.",
       },
       {
         title: "Ranking before generation, not after",
@@ -393,7 +469,40 @@ export const projects: Project[] = [
     ],
     outcome: [
       "Unstructured discussion becomes ranked, structured opportunity data that a person can actually act on.",
-      "The validation discipline is the part that generalised: I have used the same schema-at-every-boundary pattern on everything since.",
+      "The validation discipline is the part that generalised — though re-reading the code for this write-up is what taught me the difference between intending it and enforcing it. It holds at ingest and lapses at the model seams, which is precisely the boundary I would tell someone else to guard hardest.",
+    ],
+    snippets: [
+      {
+        label: "Schema enforced at the ingest boundary",
+        language: "python",
+        code: `class ExtractedDataModel(BaseModel):
+    post: PostModel                        # title: str, content: str = ""
+    comments: List[CommentModel]           # body: str
+    total_comments: int = Field(..., description="Total number of comments extracted")
+    source_file: Optional[str] = Field(None, description="Source JSON file path")
+
+try:
+    for post_data in posts_to_process:
+        post_model = PostModel(
+            title=post_data['post']['title'],
+            content=post_data['post'].get('content', ''),
+        )
+        comments_models = [CommentModel(body=c['body']) for c in post_data['comments']]
+        extracted = ExtractedDataModel(
+            post=post_model,
+            comments=comments_models,
+            total_comments=post_data['total_comments'],
+            source_file=json_file,
+        )
+        all_extracted_data.append(extracted)
+except Exception as e:
+    raise`,
+        source: "app/data_extraction/json_extraction.py:53-58, 301-342",
+        note:
+          "The except re-raises instead of substituting a default, so a post that fails validation never reaches the LLM stages as a half-populated dict. This is the boundary where the discipline actually holds — the model seams downstream do not do this yet, which the case study says plainly.",
+        caveat:
+          "Abridged. Note also that PostModel's pre-validator coerces a missing title to an empty string, so absent titles pass rather than raising — another place the fail-loud intent is softer than it reads.",
+      },
     ],
   },
 
@@ -423,6 +532,7 @@ export const projects: Project[] = [
     architecture: [
       "The loop is deliberately narrow. Capture the screen, convert the pixels into a structured UI schema, plan one atomic action, run it through a central safety contract, execute it deterministically, then compare the before and after screens to confirm the action did what it claimed.",
       "Every cycle is persisted — the observation, the plan, the action, the verification — so any run can be audited or replayed step by step.",
+      "Perception is GPT-4.1 called with the screenshot as a base64 PNG, temperature 0 and a forced JSON response, parsed into a strict six-key UI schema: screen_summary, visible_elements, text_regions, clickable_candidates, scrollable_areas and cursor, with every element carrying an x/y/width/height bounding box. Unexpected top-level keys raise rather than being ignored, so a drifting model response fails at the parse instead of halfway through a click.",
     ],
     diagram: {
       bands: [
@@ -473,6 +583,33 @@ export const projects: Project[] = [
     },
     metrics: [],
     repo: "https://github.com/apexneural-likhithmasura/CUA-Computer-Using-agent",
+    snippets: [
+      {
+        label: "The safety chokepoint",
+        language: "python",
+        code: `TRIGGER_KEYWORDS = ("login", "log in", "sign in", "signin", "submit", "send", "delete")
+
+def requires_approval(action: Dict[str, Any], vision_state: Dict[str, Any]) -> bool:
+    for field in ("label", "text", "key"):
+        value = action.get(field)
+        if isinstance(value, str) and _contains_trigger(value):
+            return True
+    action_name = action.get("action")
+    if action_name in {"click", "type", "press"}:
+        for text in _extract_texts(vision_state):
+            if text and _contains_trigger(text):
+                return True
+    return False
+
+# ---- the gate, agent/loop.py ----
+if requires_approval(action, vision_state):
+    record_failure("approval_required")
+    return {"status": "approval_required", "action": action, "vision": vision_state}`,
+        source: "agent/safety.py:6, 28-41 · agent/loop.py:26-28",
+        note:
+          "The gate fails closed — it returns before any mouse or keyboard call is reachable. But the classification it depends on is keyword matching over the vision model's own generated text, so what counts as \"sensitive\" is decided by model output rather than by anything verified about the real screen. A mislabelled button is a hole, and that is the weakness I would close first.",
+      },
+    ],
     decisions: [
       {
         title: "Vision only, on purpose",
@@ -504,7 +641,7 @@ export const projects: Project[] = [
       "Sole author. The design constraints, the perception-to-schema step, the planning loop, the safety contract and the audit log are all mine.",
     ],
     outcome: [
-      "One recorded run against VS Code: three cycles completed, then a clean halt at the human-approval gate, with the cycle artefact persisted. That is the architecture doing exactly what it was designed to do, at the scale it has actually been exercised — one application, not a validated task suite.",
+      "What exists is two artefacts, and they are worth keeping distinct. One persisted cycle against VS Code, logged as successful. Separately, a state file recording three steps completed and a halt with failure_reason \"approval_required\". The gate demonstrably fires and the loop demonstrably persists its work — but they are not one continuous narrated run, and stitching them into one would be the kind of small embellishment this page exists to avoid. One application, no task suite.",
       "It is a research build rather than a product, and I would rather present it that way. What it demonstrates is a position on agent design: determinism, auditability and a human in the loop over autonomy for its own sake. What it does not yet demonstrate is reliability across applications, which would take a task suite and a lot more runs than one.",
     ],
   },

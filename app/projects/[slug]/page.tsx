@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Reveal from "@/components/Reveal";
 import ArchDiagram from "@/components/ArchDiagram";
 import Metrics from "@/components/Metrics";
+import CodeSnippet from "@/components/CodeSnippet";
 import { projects, site } from "@/content/projects";
 
 export function generateStaticParams() {
@@ -184,6 +185,16 @@ export default async function ProjectPage({
           ))}
         </ol>
       </Section>
+
+      {/* Code sits after the decisions: by this point the reader knows what was
+          decided, and can check the claim against the thing itself. */}
+      {p.snippets.length > 0 ? (
+        <Section label="In the code">
+          {p.snippets.map((s) => (
+            <CodeSnippet key={s.label} snippet={s} />
+          ))}
+        </Section>
+      ) : null}
 
       <Section label="What I built">
         <div className="prose-block text-[17px]">
